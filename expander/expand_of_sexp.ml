@@ -188,6 +188,15 @@ module Str_generate_of_sexp = struct
          variant_of_sexp ~error_source ~typevars ?full_type (loc, row_fields)
        | { ptyp_desc = Ptyp_poly (parms, poly_tp); _ } ->
          poly_of_sexp ~error_source ~typevars parms poly_tp
+       | { ptyp_desc = Ptyp_open (id, typ); _ } ->
+         let local_open = Ast_helper.Mod.ident id in
+         let expr = Conversion.to_expression ~loc (type_of_sexp ~error_source ~typevars typ) in
+         Stdlib.Format.printf "%a%!" Pprintast.expression expr;
+         let open_ = Ast_helper.Opn.mk local_open in
+         let opened_expr = pexp_open ~loc open_ expr in
+         let arg = Fresh_name.create "x" ~loc in
+         let case = case ~guard:None ~lhs:(Fresh_name.pattern arg) ~rhs:(eapply ~loc opened_expr [ Fresh_name.expression arg ]) in
+         Conversion.of_lambda [ case ]
        | { ptyp_desc = Ptyp_variant (_, Open, _); _ }
        | { ptyp_desc = Ptyp_object (_, _); _ }
        | { ptyp_desc = Ptyp_class (_, _); _ }

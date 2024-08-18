@@ -86,6 +86,14 @@ module Str_generate_sexp_of = struct
          sexp_of_variant ~renaming (loc, row_fields)
        | { ptyp_desc = Ptyp_poly (parms, poly_tp); _ } ->
          sexp_of_poly ~renaming parms poly_tp
+       | { ptyp_desc = Ptyp_open (id, typ); _ } ->
+         let local_open = Ast_helper.Mod.ident id in
+         let expr = Conversion.to_expression ~loc (sexp_of_type ~renaming typ) in
+         let open_ = Ast_helper.Opn.mk local_open in
+         let opened_expr = pexp_open ~loc open_ expr in
+         let arg = Fresh_name.create "x" ~loc in
+         let case = case ~guard:None ~lhs:(Fresh_name.pattern arg) ~rhs:(eapply ~loc opened_expr [ Fresh_name.expression arg ]) in
+         Conversion.of_lambda [ case ]
        | { ptyp_desc = Ptyp_variant (_, Open, _); _ }
        | { ptyp_desc = Ptyp_object (_, _); _ }
        | { ptyp_desc = Ptyp_class (_, _); _ }

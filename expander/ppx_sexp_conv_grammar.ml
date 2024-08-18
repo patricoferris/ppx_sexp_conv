@@ -307,6 +307,11 @@ let rec grammar_of_type core_type ~rec_flag ~tags_of_doc_comments =
               |> typed_grammar ~loc)
             |> type_constr_conv ~loc ~f:grammar_name id
             |> untyped_grammar ~loc
+          | Ptyp_open (id, core_typ) ->
+            let expr = grammar_of_type ~rec_flag ~tags_of_doc_comments core_typ in
+            let module_name = Ast_helper.Mod.ident id in
+            let open_decl = Ast_helper.Opn.mk module_name in
+            pexp_open ~loc open_decl expr
           | Ptyp_object _ -> unsupported ~loc "object types"
           | Ptyp_class _ -> unsupported ~loc "class types"
           | Ptyp_alias _ -> unsupported ~loc "type aliases"
